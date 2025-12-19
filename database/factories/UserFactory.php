@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Role;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -46,5 +47,32 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+    public function storeKeeper(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::STORE_KEEPER,
+        ]);
+    }
+    public function customer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::CUSTOMER,
+        ]);
+    }
+
+    public function storeKeeperWithWallet($balance = 0): static {
+        return $this->storeKeeper()->afterCreating(function (User $user) use ($balance) {
+            $user->wallets()->create([
+                'balance' => $balance,
+            ]);
+        });
+    }
+    public function customerWithWallet($balance = 0): static {
+        return $this->customer()->afterCreating(function (User $user) use ($balance) {
+            $user->wallets()->create([
+                'balance' => $balance,
+            ]); 
+        });
     }
 }
