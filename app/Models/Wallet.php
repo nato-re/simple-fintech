@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Wallet extends Model
 {
@@ -38,6 +39,22 @@ class Wallet extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get transfers where this wallet is the payer.
+     */
+    public function outgoingTransfers(): HasMany
+    {
+        return $this->hasMany(Transfer::class, 'payer_wallet_id');
+    }
+
+    /**
+     * Get transfers where this wallet is the payee.
+     */
+    public function incomingTransfers(): HasMany
+    {
+        return $this->hasMany(Transfer::class, 'payee_wallet_id');
     }
 }
 
