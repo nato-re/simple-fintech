@@ -3,11 +3,12 @@
 namespace App\Http\Services;
 
 use App\Enums\Role;
+use App\Models\Transfer;
 use App\Models\Wallet;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Log;
 
 class TransferService
 {
@@ -30,6 +31,11 @@ class TransferService
         }
         try {
             DB::transaction(function () use ($payerWallet, $payeeWallet, $value) {
+                Transfer::create([
+                    'payer_wallet_id' => $payerWallet->id,
+                    'payee_wallet_id' => $payeeWallet->id,
+                    'value' => $value,
+                ]);
                 $payerWallet->decrement('balance', $value);
                 $payeeWallet->increment('balance', $value);
                 $authorized = $this->authorizeTransfer($payerWallet->id, $payeeWallet->id, $value);
@@ -42,13 +48,21 @@ class TransferService
                 }
             });
         } catch (Exception $e) {
+            Log::error($e->getMessage(), $e->getTrace());
             throw new Exception($e->getMessage(), $e->getCode());
         } 
     }
 
     public function notifyTransfer(string $payer, string $payee, float $value)
     {
-        $response = Http::retry(3, 100)->post(env('NOTIFY_URL'), [
+        $http = Http::retry(3, 100);
+        
+        // Disable SSL verification in development/local environments
+        if (app()->environment(['local', 'development', 'testing'])) {
+            $http = $http->withoutVerifying();
+        }
+        
+        $response = $http->post(env('NOTIFY_URL'), [
             'payer' => $payer,
             'payee' => $payee,
             'value' => number_format($value, 2, '.', ''),
@@ -59,7 +73,14 @@ class TransferService
 
     public function authorizeTransfer(string $payer, string $payee, float $value)
     {
-        $response = Http::retry(3, 100)->get(env('AUTHORIZE_URL'), [
+        $http = Http::retry(3, 100);
+        
+        // Disable SSL verification in development/local environments
+        if (app()->environment(['local', 'development', 'testing'])) {
+            $http = $http->withoutVerifying();
+        }
+        
+        $response = $http->get(env('AUTHORIZE_URL'), [
             'payer' => $payer,
             'payee' => $payee,
             'value' => number_format($value, 2, '.', ''),
