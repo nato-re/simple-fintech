@@ -12,6 +12,7 @@ use App\Http\Services\Contracts\AuthorizationServiceInterface;
 use App\Jobs\SendTransferNotification;
 use App\Repositories\Contracts\TransferRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
+use App\ValueObjects\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,9 @@ class TransferService
 
     public function execute(string $payer, string $payee, float $value): void
     {
+        // Convert float to Money value object for type safety and precision
+        $transferValue = Money::fromFloat($value);
+
         $payerWallet = $this->walletRepository->findByIdWithUser((int) $payer);
         $payeeWallet = $this->walletRepository->findById((int) $payee);
 
@@ -44,7 +48,9 @@ class TransferService
             ]);
         }
 
-        if (! $this->walletRepository->hasSufficientBalance($payerWallet->id, $value)) {
+        $payerBalance = Money::fromFloat($payerWallet->balance);
+
+        if ($payerBalance->isLessThan($transferValue)) {
             throw new InsufficientBalanceException(
                 $payerWallet->balance,
                 $value,
@@ -66,10 +72,12 @@ class TransferService
         }
 
         try {
-            DB::transaction(function () use ($payerWallet, $payeeWallet, $value) {
-                // 1. Authorize FIRST (before modifying balances)
-                // This ensures we don't modify data if authorization fails
-                $authorized = $this->authorizationService->authorize($payerWallet->id, $payeeWallet->id, $value);
+            DB::transaction(function () use ($payerWallet, $payeeWallet, $transferValue, $value) {
+                $authorized = $this->authorizationService->authorize(
+                    $payerWallet->id,
+                    $payeeWallet->id,
+                    $transferValue->toFloat()
+                );
                 if (! $authorized) {
                     Log::warning('Transfer not authorized by third party', [
                         'payer_wallet_id' => $payerWallet->id,
@@ -84,8 +92,6 @@ class TransferService
                     ]);
                 }
 
-                // 2. Lock wallets to prevent race conditions
-                // This ensures no other transaction can modify these wallets simultaneously
                 $lockedPayerWallet = $this->walletRepository->lockForUpdate($payerWallet->id);
                 $lockedPayeeWallet = $this->walletRepository->lockForUpdate($payeeWallet->id);
 
@@ -97,8 +103,8 @@ class TransferService
                     ]);
                 }
 
-                // 3. Re-check balance after lock (may have changed due to concurrent transactions)
-                if (! $this->walletRepository->hasSufficientBalance($payerWallet->id, $value)) {
+                $lockedPayerBalance = Money::fromFloat($lockedPayerWallet->balance);
+                if ($lockedPayerBalance->isLessThan($transferValue)) {
                     throw new InsufficientBalanceException(
                         $lockedPayerWallet->balance,
                         $value,
@@ -110,16 +116,14 @@ class TransferService
                     );
                 }
 
-                // 4. Create transfer record
                 $this->transferRepository->create([
                     'payer_wallet_id' => $payerWallet->id,
                     'payee_wallet_id' => $payeeWallet->id,
-                    'value' => $value,
+                    'value' => $transferValue->toFloat(),
                 ]);
 
-                // 5. Update wallet balances
-                $this->walletRepository->decrementBalance($payerWallet->id, $value);
-                $this->walletRepository->incrementBalance($payeeWallet->id, $value);
+                $this->walletRepository->decrementBalance($payerWallet->id, $transferValue->toFloat());
+                $this->walletRepository->incrementBalance($payeeWallet->id, $transferValue->toFloat());
 
                 Log::info('Transfer completed successfully', [
                     'payer_wallet_id' => $payerWallet->id,
@@ -128,10 +132,7 @@ class TransferService
                 ]);
             });
 
-            // 6. Dispatch notification job asynchronously (after transaction is committed)
-            // This ensures the transfer is not reverted if notification fails
-            // The job will retry automatically if it fails
-            SendTransferNotification::dispatch($payerWallet->id, $payeeWallet->id, $value);
+            SendTransferNotification::dispatch($payerWallet->id, $payeeWallet->id, $transferValue->toFloat());
 
             Log::info('Transfer notification job dispatched', [
                 'payer_wallet_id' => $payerWallet->id,
@@ -139,10 +140,8 @@ class TransferService
                 'value' => $value,
             ]);
         } catch (\App\Exceptions\BaseException $e) {
-            // Re-throw custom exceptions
             throw $e;
         } catch (\Throwable $e) {
-            // Wrap unexpected exceptions
             Log::error('Unexpected error during transfer', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
