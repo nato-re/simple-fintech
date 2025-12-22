@@ -2,6 +2,8 @@
 
 namespace App\Http\Services\Contracts;
 
+use App\ValueObjects\Money;
+
 interface AuthorizationServiceInterface
 {
     /**
@@ -9,9 +11,9 @@ interface AuthorizationServiceInterface
      *
      * @param  int  $payer Wallet ID of the payer
      * @param  int  $payee Wallet ID of the payee
-     * @param  float  $value Transfer amount
+     * @param  Money  $value Transfer amount
      * @return bool True if authorized, false otherwise
      */
-    public function authorize(int $payer, int $payee, float $value): bool;
+    public function authorize(int $payer, int $payee, Money $value): bool;
 }
 

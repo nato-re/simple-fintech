@@ -2,9 +2,6 @@
 
 namespace App\Http\Services;
 
-use App\Enums\Role;
-use App\Exceptions\InsufficientBalanceException;
-use App\Exceptions\StoreKeeperTransferException;
 use App\Exceptions\TransferException;
 use App\Exceptions\TransferNotAuthorizedException;
 use App\Exceptions\WalletNotFoundException;
@@ -21,62 +18,25 @@ class TransferService
     public function __construct(
         private WalletRepositoryInterface $walletRepository,
         private TransferRepositoryInterface $transferRepository,
-        private AuthorizationServiceInterface $authorizationService
+        private AuthorizationServiceInterface $authorizationService,
+        private TransferValidator $validator
     ) {}
 
     public function execute(string $payer, string $payee, float $value): void
     {
-        // Convert float to Money value object for type safety and precision
         $transferValue = Money::fromFloat($value);
 
         $payerWallet = $this->walletRepository->findByIdWithUser((int) $payer);
         $payeeWallet = $this->walletRepository->findById((int) $payee);
 
-        if (! $payerWallet) {
-            throw new WalletNotFoundException($payer, [
-                'payer' => $payer,
-                'payee' => $payee,
-                'value' => $value,
-            ]);
-        }
-
-        if (! $payeeWallet) {
-            throw new WalletNotFoundException($payee, [
-                'payer' => $payer,
-                'payee' => $payee,
-                'value' => $value,
-            ]);
-        }
-
-        $payerBalance = Money::fromFloat($payerWallet->balance);
-
-        if ($payerBalance->isLessThan($transferValue)) {
-            throw new InsufficientBalanceException(
-                $payerWallet->balance,
-                $value,
-                [
-                    'payer_wallet_id' => $payerWallet->id,
-                    'payee_wallet_id' => $payeeWallet->id,
-                    'value' => $value,
-                ]
-            );
-        }
-
-        if ($payerWallet->user->hasRole(Role::STORE_KEEPER)) {
-            throw new StoreKeeperTransferException([
-                'payer_wallet_id' => $payerWallet->id,
-                'payer_user_id' => $payerWallet->user->id,
-                'payee_wallet_id' => $payeeWallet->id,
-                'value' => $value,
-            ]);
-        }
+        $this->validator->validate($payerWallet, $payeeWallet, $transferValue, $payer, $payee);
 
         try {
             DB::transaction(function () use ($payerWallet, $payeeWallet, $transferValue, $value) {
                 $authorized = $this->authorizationService->authorize(
                     $payerWallet->id,
                     $payeeWallet->id,
-                    $transferValue->toFloat()
+                    $transferValue
                 );
                 if (! $authorized) {
                     Log::warning('Transfer not authorized by third party', [
@@ -103,18 +63,11 @@ class TransferService
                     ]);
                 }
 
-                $lockedPayerBalance = Money::fromFloat($lockedPayerWallet->balance);
-                if ($lockedPayerBalance->isLessThan($transferValue)) {
-                    throw new InsufficientBalanceException(
-                        $lockedPayerWallet->balance,
-                        $value,
-                        [
-                            'payer_wallet_id' => $payerWallet->id,
-                            'payee_wallet_id' => $payeeWallet->id,
-                            'value' => $value,
-                        ]
-                    );
-                }
+                $this->validator->validateBalanceAfterLock(
+                    $lockedPayerWallet,
+                    $transferValue,
+                    $payeeWallet
+                );
 
                 $this->transferRepository->create([
                     'payer_wallet_id' => $payerWallet->id,
