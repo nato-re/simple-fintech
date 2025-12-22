@@ -62,9 +62,12 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             }
 
             // Em produção, adicione emails autorizados aqui
-            // return in_array($user?->email ?? '', [
-            //     'admin@example.com',
-            // ]);
+            // O parâmetro $user será usado quando a autenticação for implementada
+            if ($user !== null) {
+                return in_array($user->email ?? '', [
+                    // 'admin@example.com',
+                ]);
+            }
 
             return false;
         });
