@@ -8,19 +8,17 @@ use App\Models\Wallet;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class TransferService
 {
-
     public function execute(string $payer, string $payee, float $value)
     {
 
         $payerWallet = Wallet::find($payer);
         $payeeWallet = Wallet::find($payee);
 
-        if (!$payerWallet || !$payeeWallet) {
-            throw new Exception('Wallet not found', 404);
+        if (! $payerWallet || ! $payeeWallet) {
+            throw new Exception('Wallet not found', code: 422);
         }
 
         if ($payerWallet->balance < $value) {
@@ -31,6 +29,7 @@ class TransferService
         }
         try {
             DB::transaction(function () use ($payerWallet, $payeeWallet, $value) {
+
                 Transfer::create([
                     'payer_wallet_id' => $payerWallet->id,
                     'payee_wallet_id' => $payeeWallet->id,
@@ -39,30 +38,29 @@ class TransferService
                 $payerWallet->decrement('balance', $value);
                 $payeeWallet->increment('balance', $value);
                 $authorized = $this->authorizeTransfer($payerWallet->id, $payeeWallet->id, $value);
-                if (!$authorized) {
+                if (! $authorized) {
                     throw new Exception('Transfer not authorized', 403);
                 }
                 $notified = $this->notifyTransfer($payerWallet->id, $payeeWallet->id, $value);
-                if (!$notified) {
+                if (! $notified) {
                     throw new Exception('Transfer not notified', 400);
                 }
             });
         } catch (Exception $e) {
-            Log::error($e->getMessage(), $e->getTrace());
             throw new Exception($e->getMessage(), $e->getCode());
-        } 
+        }
     }
 
-    public function notifyTransfer(string $payer, string $payee, float $value)
+    public function notifyTransfer(int $payer, int $payee, float $value)
     {
-        $http = Http::retry(3, 100);
-        
+        $http = Http::retry(3, 100); // NOPMD
+
         // Disable SSL verification in development/local environments
         if (app()->environment(['local', 'development', 'testing'])) {
             $http = $http->withoutVerifying();
         }
-        
-        $response = $http->post(env('NOTIFY_URL'), [
+
+        $response = $http->post(config('services.transfer.notify_url'), [
             'payer' => $payer,
             'payee' => $payee,
             'value' => number_format($value, 2, '.', ''),
@@ -71,16 +69,16 @@ class TransferService
         return $response->successful();
     }
 
-    public function authorizeTransfer(string $payer, string $payee, float $value)
+    public function authorizeTransfer(int $payer, int $payee, float $value)
     {
-        $http = Http::retry(3, 100);
-        
+        $http = Http::retry(3, 100); // NOPMD
+
         // Disable SSL verification in development/local environments
         if (app()->environment(['local', 'development', 'testing'])) {
             $http = $http->withoutVerifying();
         }
-        
-        $response = $http->get(env('AUTHORIZE_URL'), [
+
+        $response = $http->get(config('services.transfer.authorize_url'), [
             'payer' => $payer,
             'payee' => $payee,
             'value' => number_format($value, 2, '.', ''),

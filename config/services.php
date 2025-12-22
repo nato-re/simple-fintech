@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'transfer' => [
+        'authorize_url' => env('AUTHORIZE_URL'),
+        'notify_url' => env('NOTIFY_URL'),
+    ],
 
 ];

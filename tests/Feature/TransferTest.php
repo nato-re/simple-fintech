@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -31,7 +30,7 @@ class TransferTest extends TestCase
      */
     private function makeTransferRequest(int $payerWalletId, int $payeeWalletId, float $value): \Illuminate\Testing\TestResponse
     {
-        return $this->post('/transfer', [
+        return $this->post('/api/transfer', [
             'payer' => $payerWalletId,
             'payee' => $payeeWalletId,
             'value' => $value,
@@ -80,7 +79,7 @@ class TransferTest extends TestCase
 
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
         $storeKeeperWallet = User::factory()->storeKeeperWithWallet(1000.00)->create()->wallets()->first();
-        
+
         $response = $this->makeTransferRequest($customerWallet->id, $storeKeeperWallet->id, 100.00);
 
         $response->assertStatus(200);
@@ -108,7 +107,7 @@ class TransferTest extends TestCase
     {
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
 
-        $response = $this->post('/transfer', [
+        $response = $this->post('/api/transfer', [
             'payer' => 'invalid-payer',
             'payee' => $customerWallet->id,
             'value' => 100.00,
@@ -122,8 +121,8 @@ class TransferTest extends TestCase
     public function test_unsuccessful_transfer_funds_between_users_because_of_invalid_payee(): void
     {
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
-    
-        $response = $this->post('/transfer', [
+
+        $response = $this->post('/api/transfer', [
             'payer' => $customerWallet->id,
             'payee' => 'invalid-payee',
             'value' => 100.00,
@@ -138,8 +137,8 @@ class TransferTest extends TestCase
     {
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
         $storeKeeperWallet = User::factory()->storeKeeperWithWallet(1000.00)->create()->wallets()->first();
-    
-        $response = $this->post('/transfer', [
+
+        $response = $this->post('/api/transfer', [
             'payer' => $customerWallet->id,
             'payee' => $customerWallet->id,
             'value' => 'invalid-value',

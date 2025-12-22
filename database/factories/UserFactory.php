@@ -4,11 +4,10 @@ namespace Database\Factories;
 
 use App\Enums\Role;
 use App\Models\User;
+use Faker\Factory as Faker;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Faker\Factory as Faker;
-
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -28,12 +27,13 @@ class UserFactory extends Factory
     public function definition(): array
     {
         $faker = Faker::create('pt_BR');
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'cpf' => $faker->unique()->cpf(),
+            'cpf' => $faker->cpf(), // @phpstan-ignore-line
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => static::$password ??= Hash::make('password'), 
             'remember_token' => Str::random(10),
             'role' => Role::CUSTOMER,
         ];
@@ -44,35 +44,40 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn () => [
             'email_verified_at' => null,
         ]);
     }
+
     public function storeKeeper(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn () => [
             'role' => Role::STORE_KEEPER,
         ]);
     }
+
     public function customer(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn () => [
             'role' => Role::CUSTOMER,
         ]);
     }
 
-    public function storeKeeperWithWallet($balance = 0): static {
+    public function storeKeeperWithWallet($balance = 0): static
+    {
         return $this->storeKeeper()->afterCreating(function (User $user) use ($balance) {
             $user->wallets()->create([
                 'balance' => $balance,
             ]);
         });
     }
-    public function customerWithWallet($balance = 0): static {
+
+    public function customerWithWallet($balance = 0): static
+    {
         return $this->customer()->afterCreating(function (User $user) use ($balance) {
             $user->wallets()->create([
                 'balance' => $balance,
-            ]); 
+            ]);
         });
     }
 }

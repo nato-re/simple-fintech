@@ -1,0 +1,27 @@
+name: CI
+
+on: push
+
+jobs:
+  Quality_Check:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP environment
+        uses: shivammathur/setup-php@v2
+        with:
+          coverage: none
+          tools: phpmd
+
+      - name: Run PHPMD
+        run: phpmd . github phpmd.ruleset.xml --exclude 'tests/*,vendor/*'
+      
+      - name: Install dependencies
+        run: composer install
+
+      - name: Run Tests
+        run: ./vendor/bin/phpunit
+  

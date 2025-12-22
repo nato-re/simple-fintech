@@ -49,4 +49,3 @@ class Transfer extends Model
         return $this->belongsTo(Wallet::class, 'payee_wallet_id');
     }
 }
-

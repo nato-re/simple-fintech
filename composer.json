@@ -17,12 +17,16 @@
         "laravel/tinker": "^2.10"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3"
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.5.3",
+        "phpmd/phpmd" : "@stable"
+
     },
     "autoload": {
         "psr-4": {
@@ -52,6 +56,19 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "phpmd": [
+            "./vendor/bin/phpmd . text phpmd.xml --exclude 'tests/*,vendor/*'"
+        ],
+        "format": [
+            "./vendor/bin/pint"
+        ],
+        "analyse": [
+            "./vendor/bin/phpstan analyse"
+        ],
+        "quality": [
+            "@format",
+            "@analyse"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

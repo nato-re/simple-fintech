@@ -6,10 +6,12 @@ namespace App\Models;
 use App\Enums\Role;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property Role $role
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -54,23 +56,19 @@ class User extends Authenticatable
 
     /**
      * Check if the user has a specific role.
-     *
-     * @param Role|string $role
-     * @return bool
      */
     public function hasRole(Role|string $role): bool
     {
-        if($role instanceof Role) {
-            return $this->role === $role;
-        } else { 
+        if ($role instanceof Role) {
             return $this->role === $role;
         }
+
+        return $this->role->value === $role;
+
     }
 
     /**
      * Check if the user is a customer.
-     *
-     * @return bool
      */
     public function isCustomer(): bool
     {
@@ -79,8 +77,6 @@ class User extends Authenticatable
 
     /**
      * Check if the user is a cliente.
-     *
-     * @return bool
      */
     public function isStoreKeeper(): bool
     {

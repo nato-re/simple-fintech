@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property float $balance
+ * @property User $user
+ * @property \Illuminate\Database\Eloquent\Collection $outgoingTransfers
+ * @property \Illuminate\Database\Eloquent\Collection $incomingTransfers
+ */
 class Wallet extends Model
 {
     use HasFactory;
@@ -57,4 +65,3 @@ class Wallet extends Model
         return $this->hasMany(Transfer::class, 'payee_wallet_id');
     }
 }
-

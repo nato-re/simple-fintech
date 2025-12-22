@@ -75,5 +75,40 @@ Use os comandos abaixo para executar os testes:
 ```bash
 php artisan test
 # ou usando sail
-./vendor/sail/bin artisan test
+./vendor/bin/sail artisan test
+```
+
+## Ferramentas de Qualidade
+
+O projeto utiliza ferramentas para garantir a qualidade e consistência do código:
+
+### Laravel Pint
+
+Ferramenta de formatação de código baseada no PHP-CS-Fixer, seguindo os padrões PSR-12 e as convenções do Laravel.
+
+```bash
+# Formatar todo o código
+composer format
+
+# Verificar formatação sem alterar arquivos
+./vendor/bin/pint --test
+```
+
+### PHPStan
+
+Ferramenta de análise estática que detecta erros em código PHP sem executá-lo.
+
+```bash
+# Executar análise estática
+composer analyse
+
+# Ou diretamente
+./vendor/bin/phpstan analyse
+```
+
+### Executar todas as verificações
+
+```bash
+# Executa formatação e análise estática
+composer quality
 ```

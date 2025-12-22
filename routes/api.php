@@ -10,4 +10,3 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/transfer', [TransferController::class, 'transfer'])
     ->name('transfer');
-
