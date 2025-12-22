@@ -68,7 +68,9 @@ A documentação está acessível através de [http://localhost/api/documentatio
 
 ## Testes
 
-A aplicação conta com testes de integração, testando a rota do caso de sucesso, várias formas de corpo da requisição inválido, falha na integração com um serviço de autenticação e notificação.
+A aplicação conta com testes de integração e testes unitários, testando a rota do caso de sucesso, várias formas de corpo da requisição inválido, falha na integração com um serviço de autenticação e notificação.
+
+### Executar Testes
 
 Use os comandos abaixo para executar os testes:
 
@@ -77,6 +79,23 @@ php artisan test
 # ou usando sail
 ./vendor/bin/sail artisan test
 ```
+
+### Cobertura de Código
+
+**Comandos disponíveis:**
+
+```bash
+# Executar testes com cobertura (texto no terminal)
+composer test:coverage
+
+# Gerar relatório HTML de cobertura
+composer test:coverage:html
+# Relatório estará disponível em: storage/coverage/html/index.html
+
+# Executar testes com cobertura mínima de 80%
+composer test:coverage:min
+```
+
 
 ## Cache e Redis
 

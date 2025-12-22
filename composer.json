@@ -26,7 +26,6 @@
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^11.5.3",
         "phpmd/phpmd" : "@stable"
-
     },
     "autoload": {
         "psr-4": {
@@ -56,6 +55,18 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "test:coverage": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage"
+        ],
+        "test:coverage:html": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage-html=storage/coverage/html"
+        ],
+        "test:coverage:min": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage --min=80"
         ],
         "phpmd": [
             "./vendor/bin/phpmd . text phpmd.xml --exclude 'tests/*,vendor/*'"

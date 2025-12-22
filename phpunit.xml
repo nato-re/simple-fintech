@@ -16,7 +16,19 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory>app/Providers</directory>
+            <directory>app/Http/Controllers</directory>
+            <file>app/Exceptions/BaseException.php</file>
+        </exclude>
     </source>
+    <coverage>
+        <report>
+            <html outputDirectory="storage/coverage/html"/>
+            <clover outputFile="storage/coverage/clover.xml"/>
+            <text outputFile="storage/coverage/coverage.txt"/>
+        </report>
+    </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
