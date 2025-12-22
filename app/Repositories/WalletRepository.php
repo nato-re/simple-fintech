@@ -85,4 +85,3 @@ class WalletRepository implements WalletRepositoryInterface
         Cache::forget("wallet.{$walletId}.with.user");
     }
 }
-

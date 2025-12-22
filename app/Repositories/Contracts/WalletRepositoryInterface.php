@@ -41,4 +41,3 @@ interface WalletRepositoryInterface
      */
     public function lockForUpdate(int $walletId): ?Wallet;
 }
-

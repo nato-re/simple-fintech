@@ -28,4 +28,3 @@ interface TransferRepositoryInterface
      */
     public function getByPayeeWalletId(int $walletId): \Illuminate\Database\Eloquent\Collection;
 }
-

@@ -7,9 +7,7 @@ class TransferException extends BaseException
     /**
      * Create a new exception instance.
      *
-     * @param  string  $message
      * @param  array<string, mixed>  $context
-     * @param  \Throwable|null  $previous
      */
     public function __construct(string $message = 'Transfer failed', array $context = [], ?\Throwable $previous = null)
     {
@@ -22,4 +20,3 @@ class TransferException extends BaseException
         );
     }
 }
-

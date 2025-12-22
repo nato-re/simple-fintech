@@ -19,4 +19,3 @@ class StoreKeeperTransferException extends BaseException
         );
     }
 }
-

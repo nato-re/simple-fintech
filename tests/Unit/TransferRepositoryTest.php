@@ -11,6 +11,7 @@ use Tests\TestCase;
 class TransferRepositoryTest extends TestCase
 {
     private TransferRepository $repository;
+
     private $mockModel;
 
     protected function setUp(): void
@@ -59,7 +60,7 @@ class TransferRepositoryTest extends TestCase
      */
     public function test_find_by_id_returns_transfer_when_found(): void
     {
-        $transfer = new Transfer();
+        $transfer = new Transfer;
         $transfer->id = 1;
         $transfer->payer_wallet_id = 1;
         $transfer->payee_wallet_id = 2;
@@ -96,18 +97,18 @@ class TransferRepositoryTest extends TestCase
      */
     public function test_get_by_payer_wallet_id_returns_collection(): void
     {
-        $transfer1 = new Transfer();
+        $transfer1 = new Transfer;
         $transfer1->id = 1;
         $transfer1->payer_wallet_id = 1;
         $transfer1->payee_wallet_id = 2;
         $transfer1->value = 100.00;
-        
-        $transfer2 = new Transfer();
+
+        $transfer2 = new Transfer;
         $transfer2->id = 2;
         $transfer2->payer_wallet_id = 1;
         $transfer2->payee_wallet_id = 3;
         $transfer2->value = 200.00;
-        
+
         $collection = new Collection([$transfer1, $transfer2]);
 
         $queryMock = Mockery::mock();
@@ -132,18 +133,18 @@ class TransferRepositoryTest extends TestCase
      */
     public function test_get_by_payee_wallet_id_returns_collection(): void
     {
-        $transfer1 = new Transfer();
+        $transfer1 = new Transfer;
         $transfer1->id = 1;
         $transfer1->payer_wallet_id = 2;
         $transfer1->payee_wallet_id = 1;
         $transfer1->value = 100.00;
-        
-        $transfer2 = new Transfer();
+
+        $transfer2 = new Transfer;
         $transfer2->id = 2;
         $transfer2->payer_wallet_id = 3;
         $transfer2->payee_wallet_id = 1;
         $transfer2->value = 200.00;
-        
+
         $collection = new Collection([$transfer1, $transfer2]);
 
         $queryMock = Mockery::mock();
@@ -186,4 +187,3 @@ class TransferRepositoryTest extends TestCase
         $this->assertCount(0, $result);
     }
 }
-

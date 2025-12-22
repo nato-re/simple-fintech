@@ -32,31 +32,21 @@ class SendTransferNotification implements ShouldQueue
 
     /**
      * Payer wallet ID.
-     *
-     * @var int
      */
     public int $payerWalletId;
 
     /**
      * Payee wallet ID.
-     *
-     * @var int
      */
     public int $payeeWalletId;
 
     /**
      * Transfer value.
-     *
-     * @var float
      */
     public float $value;
 
     /**
      * Create a new job instance.
-     *
-     * @param  int  $payerWalletId
-     * @param  int  $payeeWalletId
-     * @param  float  $value
      */
     public function __construct(int $payerWalletId, int $payeeWalletId, float $value)
     {
@@ -120,4 +110,3 @@ class SendTransferNotification implements ShouldQueue
         // Could send to monitoring service, create alert, etc.
     }
 }
-

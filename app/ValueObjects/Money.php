@@ -16,8 +16,8 @@ class Money
     /**
      * Create a new Money instance from cents.
      *
-     * @param  int  $amountInCents Amount in cents (must be non-negative)
-     * @param  string  $currency Currency code (default: BRL)
+     * @param  int  $amountInCents  Amount in cents (must be non-negative)
+     * @param  string  $currency  Currency code (default: BRL)
      */
     public function __construct(
         private readonly int $amountInCents,
@@ -31,9 +31,9 @@ class Money
     /**
      * Create a Money instance from a float value.
      *
-     * @param  float  $amount Amount in currency units (e.g., 100.50 for R$ 100.50)
-     * @param  string  $currency Currency code (default: BRL)
-     * @return self
+     * @param  float  $amount  Amount in currency units (e.g., 100.50 for R$ 100.50)
+     * @param  string  $currency  Currency code (default: BRL)
+     *
      * @throws InvalidArgumentException If amount is out of valid range
      */
     public static function fromFloat(float $amount, string $currency = 'BRL'): self
@@ -58,9 +58,8 @@ class Money
     /**
      * Create a Money instance from cents.
      *
-     * @param  int  $amountInCents Amount in cents
-     * @param  string  $currency Currency code (default: BRL)
-     * @return self
+     * @param  int  $amountInCents  Amount in cents
+     * @param  string  $currency  Currency code (default: BRL)
      */
     public static function fromCents(int $amountInCents, string $currency = 'BRL'): self
     {
@@ -69,8 +68,6 @@ class Money
 
     /**
      * Get the amount as a float (for database storage and API responses).
-     *
-     * @return float
      */
     public function toFloat(): float
     {
@@ -79,8 +76,6 @@ class Money
 
     /**
      * Get the amount in cents.
-     *
-     * @return int
      */
     public function getAmountInCents(): int
     {
@@ -89,8 +84,6 @@ class Money
 
     /**
      * Get the currency code.
-     *
-     * @return string
      */
     public function getCurrency(): string
     {
@@ -100,8 +93,6 @@ class Money
     /**
      * Check if this amount is greater than another.
      *
-     * @param  Money  $other
-     * @return bool
      * @throws InvalidArgumentException If currencies don't match
      */
     public function isGreaterThan(Money $other): bool
@@ -114,8 +105,6 @@ class Money
     /**
      * Check if this amount is greater than or equal to another.
      *
-     * @param  Money  $other
-     * @return bool
      * @throws InvalidArgumentException If currencies don't match
      */
     public function isGreaterThanOrEqual(Money $other): bool
@@ -128,8 +117,6 @@ class Money
     /**
      * Check if this amount is less than another.
      *
-     * @param  Money  $other
-     * @return bool
      * @throws InvalidArgumentException If currencies don't match
      */
     public function isLessThan(Money $other): bool
@@ -142,8 +129,6 @@ class Money
     /**
      * Check if this amount is less than or equal to another.
      *
-     * @param  Money  $other
-     * @return bool
      * @throws InvalidArgumentException If currencies don't match
      */
     public function isLessThanOrEqual(Money $other): bool
@@ -155,9 +140,6 @@ class Money
 
     /**
      * Check if this amount equals another.
-     *
-     * @param  Money  $other
-     * @return bool
      */
     public function equals(Money $other): bool
     {
@@ -168,8 +150,8 @@ class Money
     /**
      * Add another Money amount to this one.
      *
-     * @param  Money  $other
      * @return self New Money instance with the sum
+     *
      * @throws InvalidArgumentException If currencies don't match
      */
     public function add(Money $other): self
@@ -182,8 +164,8 @@ class Money
     /**
      * Subtract another Money amount from this one.
      *
-     * @param  Money  $other
      * @return self New Money instance with the difference
+     *
      * @throws InvalidArgumentException If currencies don't match or result would be negative
      */
     public function subtract(Money $other): self
@@ -201,9 +183,6 @@ class Money
 
     /**
      * Multiply this amount by a scalar.
-     *
-     * @param  float|int  $multiplier
-     * @return self
      */
     public function multiply(float|int $multiplier): self
     {
@@ -219,8 +198,7 @@ class Money
     /**
      * Get a zero Money instance.
      *
-     * @param  string  $currency Currency code (default: BRL)
-     * @return self
+     * @param  string  $currency  Currency code (default: BRL)
      */
     public static function zero(string $currency = 'BRL'): self
     {
@@ -230,8 +208,6 @@ class Money
     /**
      * Assert that two Money instances have the same currency.
      *
-     * @param  Money  $other
-     * @return void
      * @throws InvalidArgumentException If currencies don't match
      */
     private function assertSameCurrency(Money $other): void
@@ -249,12 +225,9 @@ class Money
 
     /**
      * Get string representation of the Money object.
-     *
-     * @return string
      */
     public function __toString(): string
     {
         return sprintf('%s %.2f', $this->currency, $this->toFloat());
     }
 }
-

@@ -4,16 +4,15 @@ namespace App\Http\Services;
 
 use App\Http\Services\Contracts\AuthorizationServiceInterface;
 use App\ValueObjects\Money;
-use Illuminate\Support\Facades\Log;
 
 class AuthorizationService extends AbstractHttpService implements AuthorizationServiceInterface
 {
     /**
      * Authorize a transfer between wallets.
      *
-     * @param  int  $payer Wallet ID of the payer
-     * @param  int  $payee Wallet ID of the payee
-     * @param  Money  $value Transfer amount
+     * @param  int  $payer  Wallet ID of the payer
+     * @param  int  $payee  Wallet ID of the payee
+     * @param  Money  $value  Transfer amount
      * @return bool True if authorized, false otherwise
      */
     public function authorize(int $payer, int $payee, Money $value): bool
@@ -36,4 +35,3 @@ class AuthorizationService extends AbstractHttpService implements AuthorizationS
         }
     }
 }
-

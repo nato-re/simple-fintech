@@ -19,7 +19,7 @@ class TransferValidatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->validator = new TransferValidator();
+        $this->validator = new TransferValidator;
     }
 
     /**
@@ -58,7 +58,7 @@ class TransferValidatorTest extends TestCase
         try {
             $this->validator->validate(null, $payeeWallet, $transferValue);
             $this->fail('Expected WalletNotFoundException or TypeError');
-        } catch (WalletNotFoundException | \TypeError $e) {
+        } catch (WalletNotFoundException|\TypeError $e) {
             $this->assertTrue(true);
         }
     }
@@ -78,7 +78,7 @@ class TransferValidatorTest extends TestCase
         try {
             $this->validator->validate($payerWallet, null, $transferValue);
             $this->fail('Expected WalletNotFoundException or TypeError');
-        } catch (WalletNotFoundException | \TypeError $e) {
+        } catch (WalletNotFoundException|\TypeError $e) {
             $this->assertTrue(true);
         }
     }
@@ -233,4 +233,3 @@ class TransferValidatorTest extends TestCase
         $this->assertTrue(true);
     }
 }
-

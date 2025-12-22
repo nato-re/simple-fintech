@@ -26,11 +26,7 @@ abstract class BaseException extends Exception
     /**
      * Create a new exception instance.
      *
-     * @param  string  $message
-     * @param  int  $statusCode
-     * @param  string  $errorCode
      * @param  array<string, mixed>  $context
-     * @param  \Throwable|null  $previous
      */
     public function __construct(
         string $message = '',
@@ -86,4 +82,3 @@ abstract class BaseException extends Exception
         ];
     }
 }
-

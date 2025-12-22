@@ -65,7 +65,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             // return in_array($user?->email ?? '', [
             //     'admin@example.com',
             // ]);
-            
+
             return false;
         });
     }

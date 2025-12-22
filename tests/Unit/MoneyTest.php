@@ -342,4 +342,3 @@ class MoneyTest extends TestCase
         $this->assertEquals(999999.99, $money->toFloat());
     }
 }
-

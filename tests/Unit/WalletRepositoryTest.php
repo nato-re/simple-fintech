@@ -11,8 +11,8 @@ use Tests\TestCase;
 
 class WalletRepositoryTest extends TestCase
 {
-
     private WalletRepository $repository;
+
     private $mockModel;
 
     protected function setUp(): void
@@ -40,10 +40,10 @@ class WalletRepositoryTest extends TestCase
                 return $callback();
             });
 
-        $wallet = new Wallet();
+        $wallet = new Wallet;
         $wallet->id = 1;
         $wallet->balance = 1000.00;
-        
+
         $this->mockModel->shouldReceive('find')
             ->once()
             ->with(1)
@@ -90,11 +90,11 @@ class WalletRepositoryTest extends TestCase
                 return $callback();
             });
 
-        $user = new User();
+        $user = new User;
         $user->id = 1;
         $user->name = 'Test User';
-        
-        $wallet = new Wallet();
+
+        $wallet = new Wallet;
         $wallet->id = 1;
         $wallet->balance = 1000.00;
         $wallet->setRelation('user', $user);
@@ -210,10 +210,10 @@ class WalletRepositoryTest extends TestCase
                 return $callback();
             });
 
-        $wallet = new Wallet();
+        $wallet = new Wallet;
         $wallet->id = 1;
         $wallet->balance = 1000.00;
-        
+
         $this->mockModel->shouldReceive('find')
             ->once()
             ->with(1)
@@ -236,10 +236,10 @@ class WalletRepositoryTest extends TestCase
                 return $callback();
             });
 
-        $wallet = new Wallet();
+        $wallet = new Wallet;
         $wallet->id = 1;
         $wallet->balance = 100.00;
-        
+
         $this->mockModel->shouldReceive('find')
             ->once()
             ->with(1)
@@ -277,7 +277,7 @@ class WalletRepositoryTest extends TestCase
      */
     public function test_lock_for_update_locks_wallet(): void
     {
-        $wallet = new Wallet();
+        $wallet = new Wallet;
         $wallet->id = 1;
         $wallet->balance = 1000.00;
 
@@ -327,4 +327,3 @@ class WalletRepositoryTest extends TestCase
         $this->assertNull($result);
     }
 }
-

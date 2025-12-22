@@ -43,4 +43,3 @@ class TransferRepository implements TransferRepositoryInterface
         return $this->model->where('payee_wallet_id', $walletId)->get();
     }
 }
-

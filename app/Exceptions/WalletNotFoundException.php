@@ -7,7 +7,6 @@ class WalletNotFoundException extends BaseException
     /**
      * Create a new exception instance.
      *
-     * @param  int|string  $walletId
      * @param  array<string, mixed>  $context
      */
     public function __construct(int|string $walletId, array $context = [])
@@ -20,4 +19,3 @@ class WalletNotFoundException extends BaseException
         );
     }
 }
-

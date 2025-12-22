@@ -7,8 +7,6 @@ class InsufficientBalanceException extends BaseException
     /**
      * Create a new exception instance.
      *
-     * @param  float  $currentBalance
-     * @param  float  $requiredAmount
      * @param  array<string, mixed>  $context
      */
     public function __construct(float $currentBalance, float $requiredAmount, array $context = [])
@@ -30,4 +28,3 @@ class InsufficientBalanceException extends BaseException
         );
     }
 }
-

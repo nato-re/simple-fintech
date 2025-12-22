@@ -36,4 +36,3 @@ class TransferConstants
      */
     public const CACHE_TTL_WALLET_WITH_USER = 3600;
 }
-

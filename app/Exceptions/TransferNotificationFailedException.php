@@ -19,4 +19,3 @@ class TransferNotificationFailedException extends BaseException
         );
     }
 }
-

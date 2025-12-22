@@ -21,10 +21,6 @@ class TransferValidator
 
     /**
      * Validate all transfer business rules.
-     *
-     * @param  Wallet|null  $payerWallet
-     * @param  Wallet|null  $payeeWallet
-     * @param  Money  $transferValue
      */
     public function validate(
         ?Wallet $payerWallet,
@@ -39,10 +35,6 @@ class TransferValidator
     /**
      * Validate that both wallets exist.
      *
-     * @param  Wallet|null  $payerWallet
-     * @param  Wallet|null  $payeeWallet
-     * @param  Money  $transferValue
-     * @return void
      * @throws WalletNotFoundException
      */
     private function validateWalletsExist(
@@ -73,11 +65,6 @@ class TransferValidator
     /**
      * Validate that payer has sufficient balance.
      *
-     * @param  Wallet  $payerWallet
-     * @param  Money  $transferValue
-     * @param  Wallet  $payeeWallet
-     * @param  Money  $transferValue
-     * @return void
      * @throws InsufficientBalanceException
      */
     private function validateSufficientBalance(
@@ -103,10 +90,6 @@ class TransferValidator
     /**
      * Validate that payer is not a store keeper.
      *
-     * @param  Wallet  $payerWallet
-     * @param  Wallet  $payeeWallet
-     * @param  Money  $transferValue
-     * @return void
      * @throws StoreKeeperTransferException
      */
     private function validatePayerIsNotStoreKeeper(
@@ -127,11 +110,6 @@ class TransferValidator
     /**
      * Validate balance after lock (re-check for race conditions).
      *
-     * @param  Wallet  $lockedPayerWallet
-     * @param  Money  $transferValue
-     * @param  Wallet  $lockedPayeeWallet
-     * @param  Money  $transferValue
-     * @return void
      * @throws InsufficientBalanceException
      */
     public function validateBalanceAfterLock(
@@ -154,4 +132,3 @@ class TransferValidator
         }
     }
 }
-

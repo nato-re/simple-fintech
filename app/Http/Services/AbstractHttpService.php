@@ -31,7 +31,6 @@ abstract class AbstractHttpService
     /**
      * Handle HTTP exceptions with appropriate logging.
      *
-     * @param  \Throwable  $exception
      * @param  array<string, mixed>  $context
      * @return bool Always returns false (indicates failure)
      */
@@ -63,4 +62,3 @@ abstract class AbstractHttpService
         return number_format($value, 2, '.', '');
     }
 }
-
