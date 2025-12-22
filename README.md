@@ -78,6 +78,29 @@ php artisan test
 ./vendor/bin/sail artisan test
 ```
 
+## Cache e Redis
+
+O projeto utiliza **Redis** como driver de cache padrão para melhor performance e escalabilidade. O Redis está configurado no Docker Compose e é usado para:
+
+- Cache de consultas de carteiras (`WalletRepository`)
+- Cache distribuído (permite escalabilidade horizontal)
+- Melhor performance em ambientes de produção
+
+**Configuração:**
+
+- Redis está habilitado no `compose.yaml`
+- Driver padrão: `redis` (configurado em `config/cache.php`)
+- Conexão: `redis:6379` (quando usando Docker)
+- Database de cache: `1` (separado do database padrão `0`)
+
+Para usar Redis localmente sem Docker, configure as variáveis de ambiente:
+
+```env
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+CACHE_STORE=redis
+```
+
 ## Ferramentas de Qualidade
 
 O projeto utiliza ferramentas para garantir a qualidade e consistência do código:
