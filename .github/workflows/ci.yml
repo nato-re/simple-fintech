@@ -11,30 +11,6 @@ jobs:
     name: Quality Check
     runs-on: ubuntu-latest
     
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: testing
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,20 +38,10 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-
       - name: Setup database
         env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: testing
-          DB_USERNAME: root
-          DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          CACHE_STORE: redis
-          AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
-          NOTIFY_URL: https://util.devi.tools/api/v2/notify
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
         run: |
           php artisan migrate --force
 
@@ -90,30 +56,16 @@ jobs:
 
       - name: Run Unit Tests
         env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: testing
-          DB_USERNAME: root
-          DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          CACHE_STORE: redis
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
           AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
           NOTIFY_URL: https://util.devi.tools/api/v2/notify
         run: ./vendor/bin/phpunit --testsuite=Unit --no-coverage
 
       - name: Run Feature Tests
         env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: testing
-          DB_USERNAME: root
-          DB_PASSWORD: password
-          REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          CACHE_STORE: redis
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
           AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
           NOTIFY_URL: https://util.devi.tools/api/v2/notify
         run: ./vendor/bin/phpunit --testsuite=Feature --no-coverage
