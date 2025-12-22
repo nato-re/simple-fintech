@@ -52,10 +52,8 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Copy .env
-        run: |
-          cp .env.example .env || true
-          php artisan key:generate --ansi || true
+      - name: Setup project
+        run: composer setup
 
       - name: Setup database
         env:
