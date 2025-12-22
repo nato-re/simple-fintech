@@ -25,22 +25,13 @@ class TransferValidator
      * @param  Wallet|null  $payerWallet
      * @param  Wallet|null  $payeeWallet
      * @param  Money  $transferValue
-     * @param  string  $payerId Original payer ID for error context
-     * @param  string  $payeeId Original payee ID for error context
-     * @param  float  $originalValue Original float value for error context
-     * @return void
-     * @throws WalletNotFoundException
-     * @throws InsufficientBalanceException
-     * @throws StoreKeeperTransferException
      */
     public function validate(
         ?Wallet $payerWallet,
         ?Wallet $payeeWallet,
-        Money $transferValue,
-        string $payerId,
-        string $payeeId,
+        Money $transferValue
     ): void {
-        $this->validateWalletsExist($payerWallet, $payeeWallet, $payerId, $payeeId, $transferValue);
+        $this->validateWalletsExist($payerWallet, $payeeWallet, $transferValue);
         $this->validateSufficientBalance($payerWallet, $transferValue, $payeeWallet);
         $this->validatePayerIsNotStoreKeeper($payerWallet, $payeeWallet, $transferValue);
     }
@@ -50,8 +41,6 @@ class TransferValidator
      *
      * @param  Wallet|null  $payerWallet
      * @param  Wallet|null  $payeeWallet
-     * @param  string  $payerId
-     * @param  string  $payeeId
      * @param  Money  $transferValue
      * @return void
      * @throws WalletNotFoundException
@@ -59,22 +48,23 @@ class TransferValidator
     private function validateWalletsExist(
         ?Wallet $payerWallet,
         ?Wallet $payeeWallet,
-        string $payerId,
-        string $payeeId,
         Money $transferValue
     ): void {
+        $payerUserId = $payerWallet?->user->id;
+        $payeeUserId = $payeeWallet?->user->id;
+
         if (! $payerWallet) {
-            throw new WalletNotFoundException($payerId, [
-                'payer' => $payerId,
-                'payee' => $payeeId,
+            throw new WalletNotFoundException($payerUserId, [
+                'payer' => $payerUserId,
+                'payee' => $payeeUserId,
                 'value' => $transferValue->toFloat(),
             ]);
         }
 
         if (! $payeeWallet) {
-            throw new WalletNotFoundException($payeeId, [
-                'payer' => $payerId,
-                'payee' => $payeeId,
+            throw new WalletNotFoundException($payeeUserId, [
+                'payer' => $payerUserId,
+                'payee' => $payeeUserId,
                 'value' => $transferValue->toFloat(),
             ]);
         }

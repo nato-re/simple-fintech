@@ -27,9 +27,9 @@ class TransferService
         $transferValue = Money::fromFloat($value);
 
         $payerWallet = $this->walletRepository->findByIdWithUser((int) $payer);
-        $payeeWallet = $this->walletRepository->findById((int) $payee);
+        $payeeWallet = $this->walletRepository->findByIdWithUser((int) $payee);
 
-        $this->validator->validate($payerWallet, $payeeWallet, $transferValue, $payer, $payee);
+        $this->validator->validate($payerWallet, $payeeWallet, $transferValue);
 
         try {
             DB::transaction(function () use ($payerWallet, $payeeWallet, $transferValue, $value) {

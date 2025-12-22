@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 
 class SendTransferNotification implements ShouldQueue
@@ -91,7 +92,7 @@ class SendTransferNotification implements ShouldQueue
             ]);
 
             // Throw exception to trigger retry
-            throw new \RuntimeException('Transfer notification failed');
+            throw new RuntimeException('Transfer notification failed');
         }
 
         Log::info('Transfer notification sent successfully', [
