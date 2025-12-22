@@ -96,6 +96,16 @@ composer test:coverage:html
 composer test:coverage:min
 ```
 
+## Laravel Telescope
+
+O projeto utiliza **Laravel Telescope** para observabilidade e debugging. O Telescope monitora requisições, queries, jobs, eventos, exceções e muito mais.
+
+**Acesso:**
+
+- URL: `http://localhost/telescope` (em ambiente local)
+- O Telescope está habilitado automaticamente em ambiente `local`
+- Em produção, configure o gate em `app/Providers/TelescopeServiceProvider.php`
+
 
 ## Cache e Redis
 
