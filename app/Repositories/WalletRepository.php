@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Constants\TransferConstants;
 use App\Models\Wallet;
 use App\Repositories\Contracts\WalletRepositoryInterface;
 use Illuminate\Support\Facades\Cache;
@@ -15,7 +16,7 @@ class WalletRepository implements WalletRepositoryInterface
      */
     public function findById(int $walletId): ?Wallet
     {
-        return Cache::remember("wallet.{$walletId}", 3600, function () use ($walletId) {
+        return Cache::remember("wallet.{$walletId}", TransferConstants::CACHE_TTL_WALLET, function () use ($walletId) {
             return $this->model->find($walletId);
         });
     }
@@ -25,7 +26,7 @@ class WalletRepository implements WalletRepositoryInterface
      */
     public function findByIdWithUser(int $walletId): ?Wallet
     {
-        return Cache::remember("wallet.{$walletId}.with.user", 3600, function () use ($walletId) {
+        return Cache::remember("wallet.{$walletId}.with.user", TransferConstants::CACHE_TTL_WALLET_WITH_USER, function () use ($walletId) {
             return $this->model->with('user')->find($walletId);
         });
     }

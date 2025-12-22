@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\TransferConstants;
 use App\Http\Requests\TransferRequest;
 use App\Http\Services\TransferService;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class TransferController extends Controller
             properties: [
                 new OA\Property(property: 'payer', type: 'integer', example: 1, description: 'ID of the payer wallet'),
                 new OA\Property(property: 'payee', type: 'integer', example: 6, description: 'ID of the payee wallet'),
-                new OA\Property(property: 'value', type: 'number', format: 'float', example: 100.0, description: 'Transfer amount (min: 0.01, max: 999999999.99)'),
+                new OA\Property(property: 'value', type: 'number', format: 'float', example: 100.0, description: 'Transfer amount (min: '.TransferConstants::MIN_VALUE.', max: '.TransferConstants::MAX_VALUE.')'),
             ]
         )
     )]

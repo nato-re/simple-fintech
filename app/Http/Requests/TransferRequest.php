@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\TransferConstants;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -27,8 +28,8 @@ class TransferRequest extends FormRequest
             'value' => [
                 'required',
                 'numeric',
-                'min:0.01',
-                'max:999999999.99',
+                'min:'.TransferConstants::MIN_VALUE,
+                'max:'.TransferConstants::MAX_VALUE,
             ],
             'payer' => [
                 'required',
@@ -54,8 +55,8 @@ class TransferRequest extends FormRequest
         return [
             'value.required' => 'The transfer value is required.',
             'value.numeric' => 'The transfer value must be a number.',
-            'value.min' => 'The transfer value must be at least 0.01.',
-            'value.max' => 'The transfer value is too large.',
+            'value.min' => 'The transfer value must be at least '.TransferConstants::MIN_VALUE.'.',
+            'value.max' => 'The transfer value is too large (maximum: '.TransferConstants::MAX_VALUE.').',
             'payer.required' => 'The payer ID is required.',
             'payer.integer' => 'The payer ID must be an integer.',
             'payer.exists' => 'The selected payer does not exist.',

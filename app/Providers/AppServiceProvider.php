@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\Services\AuthorizationService;
+use App\Http\Services\Contracts\AuthorizationServiceInterface;
+use App\Http\Services\Contracts\NotificationServiceInterface;
+use App\Http\Services\NotificationService;
 use App\Repositories\Contracts\TransferRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
 use App\Repositories\TransferRepository;
@@ -26,6 +30,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             TransferRepositoryInterface::class,
             TransferRepository::class
+        );
+
+        // Register external services
+        $this->app->bind(
+            AuthorizationServiceInterface::class,
+            AuthorizationService::class
+        );
+
+        $this->app->bind(
+            NotificationServiceInterface::class,
+            NotificationService::class
         );
     }
 
