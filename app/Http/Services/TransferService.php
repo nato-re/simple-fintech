@@ -7,10 +7,9 @@ use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\StoreKeeperTransferException;
 use App\Exceptions\TransferException;
 use App\Exceptions\TransferNotAuthorizedException;
-use App\Exceptions\TransferNotificationFailedException;
 use App\Exceptions\WalletNotFoundException;
 use App\Http\Services\Contracts\AuthorizationServiceInterface;
-use App\Http\Services\Contracts\NotificationServiceInterface;
+use App\Jobs\SendTransferNotification;
 use App\Repositories\Contracts\TransferRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +20,7 @@ class TransferService
     public function __construct(
         private WalletRepositoryInterface $walletRepository,
         private TransferRepositoryInterface $transferRepository,
-        private AuthorizationServiceInterface $authorizationService,
-        private NotificationServiceInterface $notificationService
+        private AuthorizationServiceInterface $authorizationService
     ) {}
 
     public function execute(string $payer, string $payee, float $value): void
@@ -123,32 +121,23 @@ class TransferService
                 $this->walletRepository->decrementBalance($payerWallet->id, $value);
                 $this->walletRepository->incrementBalance($payeeWallet->id, $value);
 
-                // 6. Notify (after transfer is committed)
-                // Note: If notification fails, the transfer is still valid
-                // In the future, this should be moved to an async job/queue
-                $notified = $this->notificationService->notify($payerWallet->id, $payeeWallet->id, $value);
-                if (! $notified) {
-                    Log::error('Transfer notification failed', [
-                        'payer_wallet_id' => $payerWallet->id,
-                        'payee_wallet_id' => $payeeWallet->id,
-                        'value' => $value,
-                    ]);
-
-                    // TODO: Move notification to async job/queue
-                    // For now, we still throw exception to maintain backward compatibility with tests
-                    throw new TransferNotificationFailedException([
-                        'payer_wallet_id' => $payerWallet->id,
-                        'payee_wallet_id' => $payeeWallet->id,
-                        'value' => $value,
-                    ]);
-                }
-
                 Log::info('Transfer completed successfully', [
                     'payer_wallet_id' => $payerWallet->id,
                     'payee_wallet_id' => $payeeWallet->id,
                     'value' => $value,
                 ]);
             });
+
+            // 6. Dispatch notification job asynchronously (after transaction is committed)
+            // This ensures the transfer is not reverted if notification fails
+            // The job will retry automatically if it fails
+            SendTransferNotification::dispatch($payerWallet->id, $payeeWallet->id, $value);
+
+            Log::info('Transfer notification job dispatched', [
+                'payer_wallet_id' => $payerWallet->id,
+                'payee_wallet_id' => $payeeWallet->id,
+                'value' => $value,
+            ]);
         } catch (\App\Exceptions\BaseException $e) {
             // Re-throw custom exceptions
             throw $e;

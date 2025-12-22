@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendTransferNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 define('AUTHORIZE_URL', 'https://util.devi.tools/api/v2/authorize');
@@ -185,6 +187,8 @@ class TransferTest extends TestCase
 
     public function test_verify_successful_authorization_of_third_party_transfer_and_notification(): void
     {
+        Queue::fake();
+
         $this->mockHttpResponses();
 
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
@@ -193,16 +197,24 @@ class TransferTest extends TestCase
         $response = $this->makeTransferRequest($customerWallet->id, $storeKeeperWallet->id, 100.00);
 
         $this->assertAuthorizeRequestSent();
-        $this->assertNotifyRequestSent();
 
         $response->assertStatus(200);
 
         $this->assertWalletBalance($customerWallet->id, 900.00);
         $this->assertWalletBalance($storeKeeperWallet->id, 1100.00);
+
+        // Notification job should be dispatched
+        Queue::assertPushed(SendTransferNotification::class, function ($job) use ($customerWallet, $storeKeeperWallet) {
+            return $job->payerWalletId === $customerWallet->id &&
+                   $job->payeeWalletId === $storeKeeperWallet->id &&
+                   $job->value === 100.00;
+        });
     }
 
     public function test_verify_unsuccessful_notification_of_third_party_transfer(): void
     {
+        Queue::fake();
+
         $this->mockHttpResponses(200, 400);
 
         $customerWallet = User::factory()->customerWithWallet(1000.00)->create()->wallets()->first();
@@ -211,11 +223,19 @@ class TransferTest extends TestCase
         $response = $this->makeTransferRequest($customerWallet->id, $storeKeeperWallet->id, 100.00);
 
         $this->assertAuthorizeRequestSent();
-        $this->assertNotifyRequestSent();
 
-        $response->assertStatus(400);
+        // Transfer should succeed even if notification fails (notification is async)
+        $response->assertStatus(200);
 
-        $this->assertWalletBalance($customerWallet->id, 1000.00);
-        $this->assertWalletBalance($storeKeeperWallet->id, 1000.00);
+        // Balances should be updated (transfer was successful)
+        $this->assertWalletBalance($customerWallet->id, 900.00);
+        $this->assertWalletBalance($storeKeeperWallet->id, 1100.00);
+
+        // Notification job should be dispatched (but will fail when processed)
+        Queue::assertPushed(SendTransferNotification::class, function ($job) use ($customerWallet, $storeKeeperWallet) {
+            return $job->payerWalletId === $customerWallet->id &&
+                   $job->payeeWalletId === $storeKeeperWallet->id &&
+                   $job->value === 100.00;
+        });
     }
 }
