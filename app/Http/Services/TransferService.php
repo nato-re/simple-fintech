@@ -3,11 +3,17 @@
 namespace App\Http\Services;
 
 use App\Enums\Role;
+use App\Exceptions\InsufficientBalanceException;
+use App\Exceptions\StoreKeeperTransferException;
+use App\Exceptions\TransferException;
+use App\Exceptions\TransferNotAuthorizedException;
+use App\Exceptions\TransferNotificationFailedException;
+use App\Exceptions\WalletNotFoundException;
 use App\Repositories\Contracts\TransferRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TransferService
 {
@@ -16,21 +22,46 @@ class TransferService
         private TransferRepositoryInterface $transferRepository
     ) {}
 
-    public function execute(string $payer, string $payee, float $value)
+    public function execute(string $payer, string $payee, float $value): void
     {
         $payerWallet = $this->walletRepository->findByIdWithUser((int) $payer);
         $payeeWallet = $this->walletRepository->findById((int) $payee);
 
-        if (! $payerWallet || ! $payeeWallet) {
-            throw new Exception('Wallet not found', code: 422);
+        if (! $payerWallet) {
+            throw new WalletNotFoundException($payer, [
+                'payer' => $payer,
+                'payee' => $payee,
+                'value' => $value,
+            ]);
+        }
+
+        if (! $payeeWallet) {
+            throw new WalletNotFoundException($payee, [
+                'payer' => $payer,
+                'payee' => $payee,
+                'value' => $value,
+            ]);
         }
 
         if (! $this->walletRepository->hasSufficientBalance($payerWallet->id, $value)) {
-            throw new Exception('Insufficient balance', 400);
+            throw new InsufficientBalanceException(
+                $payerWallet->balance,
+                $value,
+                [
+                    'payer_wallet_id' => $payerWallet->id,
+                    'payee_wallet_id' => $payeeWallet->id,
+                    'value' => $value,
+                ]
+            );
         }
 
         if ($payerWallet->user->hasRole(Role::STORE_KEEPER)) {
-            throw new Exception('Store keeper cannot transfer funds', 400);
+            throw new StoreKeeperTransferException([
+                'payer_wallet_id' => $payerWallet->id,
+                'payer_user_id' => $payerWallet->user->id,
+                'payee_wallet_id' => $payeeWallet->id,
+                'value' => $value,
+            ]);
         }
 
         try {
@@ -46,20 +77,67 @@ class TransferService
 
                 $authorized = $this->authorizeTransfer($payerWallet->id, $payeeWallet->id, $value);
                 if (! $authorized) {
-                    throw new Exception('Transfer not authorized', 403);
+                    Log::warning('Transfer not authorized by third party', [
+                        'payer_wallet_id' => $payerWallet->id,
+                        'payee_wallet_id' => $payeeWallet->id,
+                        'value' => $value,
+                    ]);
+
+                    throw new TransferNotAuthorizedException([
+                        'payer_wallet_id' => $payerWallet->id,
+                        'payee_wallet_id' => $payeeWallet->id,
+                        'value' => $value,
+                    ]);
                 }
 
                 $notified = $this->notifyTransfer($payerWallet->id, $payeeWallet->id, $value);
                 if (! $notified) {
-                    throw new Exception('Transfer not notified', 400);
+                    Log::error('Transfer notification failed', [
+                        'payer_wallet_id' => $payerWallet->id,
+                        'payee_wallet_id' => $payeeWallet->id,
+                        'value' => $value,
+                    ]);
+
+                    throw new TransferNotificationFailedException([
+                        'payer_wallet_id' => $payerWallet->id,
+                        'payee_wallet_id' => $payeeWallet->id,
+                        'value' => $value,
+                    ]);
                 }
+
+                Log::info('Transfer completed successfully', [
+                    'payer_wallet_id' => $payerWallet->id,
+                    'payee_wallet_id' => $payeeWallet->id,
+                    'value' => $value,
+                ]);
             });
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage(), $e->getCode());
+        } catch (\App\Exceptions\BaseException $e) {
+            // Re-throw custom exceptions
+            throw $e;
+        } catch (\Throwable $e) {
+            // Wrap unexpected exceptions
+            Log::error('Unexpected error during transfer', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'payer' => $payer,
+                'payee' => $payee,
+                'value' => $value,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw new TransferException(
+                'An unexpected error occurred during the transfer',
+                [
+                    'payer' => $payer,
+                    'payee' => $payee,
+                    'value' => $value,
+                ],
+                $e
+            );
         }
     }
 
-    public function notifyTransfer(int $payer, int $payee, float $value)
+    public function notifyTransfer(int $payer, int $payee, float $value): bool
     {
         $http = Http::retry(3, 100); // NOPMD
 
@@ -68,16 +146,19 @@ class TransferService
             $http = $http->withoutVerifying();
         }
 
-        $response = $http->post(config('services.transfer.notify_url'), [
-            'payer' => $payer,
-            'payee' => $payee,
-            'value' => number_format($value, 2, '.', ''),
-        ]);
-
-        return $response->successful();
+        try {
+            $http->post(config('services.transfer.notify_url'), [
+                'payer' => $payer,
+                'payee' => $payee,
+                'value' => number_format($value, 2, '.', ''),
+            ]);
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 
-    public function authorizeTransfer(int $payer, int $payee, float $value)
+    public function authorizeTransfer(int $payer, int $payee, float $value): bool
     {
         $http = Http::retry(3, 100); // NOPMD
 
@@ -85,13 +166,15 @@ class TransferService
         if (app()->environment(['local', 'development', 'testing'])) {
             $http = $http->withoutVerifying();
         }
-
-        $response = $http->get(config('services.transfer.authorize_url'), [
-            'payer' => $payer,
-            'payee' => $payee,
-            'value' => number_format($value, 2, '.', ''),
-        ]);
-
-        return $response->successful();
+        try {
+            $http->get(config('services.transfer.authorize_url'), [
+                'payer' => $payer,
+                'payee' => $payee,
+                'value' => number_format($value, 2, '.', ''),
+            ]);
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 }
