@@ -25,6 +25,16 @@ jobs:
           --health-timeout=5s
           --health-retries=3
 
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,6 +71,9 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: root
           DB_PASSWORD: password
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          CACHE_STORE: redis
         run: |
           php artisan migrate --force
 
@@ -81,7 +94,10 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: root
           DB_PASSWORD: password
-        run: ./vendor/bin/phpunit --testsuite=Unit
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          CACHE_STORE: redis
+        run: ./vendor/bin/phpunit --testsuite=Unit --no-coverage
 
       - name: Run Feature Tests
         env:
@@ -91,7 +107,10 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: root
           DB_PASSWORD: password
-        run: ./vendor/bin/phpunit --testsuite=Feature
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          CACHE_STORE: redis
+        run: ./vendor/bin/phpunit --testsuite=Feature --no-coverage
 
       - name: Upload test results
         if: always()
