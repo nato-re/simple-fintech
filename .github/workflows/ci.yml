@@ -74,6 +74,8 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
           CACHE_STORE: redis
+          AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
+          NOTIFY_URL: https://util.devi.tools/api/v2/notify
         run: |
           php artisan migrate --force
 
@@ -97,6 +99,8 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
           CACHE_STORE: redis
+          AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
+          NOTIFY_URL: https://util.devi.tools/api/v2/notify
         run: ./vendor/bin/phpunit --testsuite=Unit --no-coverage
 
       - name: Run Feature Tests
@@ -110,6 +114,8 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
           CACHE_STORE: redis
+          AUTHORIZE_URL: https://util.devi.tools/api/v2/authorize
+          NOTIFY_URL: https://util.devi.tools/api/v2/notify
         run: ./vendor/bin/phpunit --testsuite=Feature --no-coverage
 
       - name: Upload test results
