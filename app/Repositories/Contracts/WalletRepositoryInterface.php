@@ -35,5 +35,10 @@ interface WalletRepositoryInterface
      * Check if wallet has sufficient balance.
      */
     public function hasSufficientBalance(int $walletId, float $amount): bool;
+
+    /**
+     * Lock wallet for update (pessimistic locking to prevent race conditions).
+     */
+    public function lockForUpdate(int $walletId): ?Wallet;
 }
 

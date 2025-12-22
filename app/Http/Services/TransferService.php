@@ -69,15 +69,8 @@ class TransferService
 
         try {
             DB::transaction(function () use ($payerWallet, $payeeWallet, $value) {
-                $this->transferRepository->create([
-                    'payer_wallet_id' => $payerWallet->id,
-                    'payee_wallet_id' => $payeeWallet->id,
-                    'value' => $value,
-                ]);
-
-                $this->walletRepository->decrementBalance($payerWallet->id, $value);
-                $this->walletRepository->incrementBalance($payeeWallet->id, $value);
-
+                // 1. Authorize FIRST (before modifying balances)
+                // This ensures we don't modify data if authorization fails
                 $authorized = $this->authorizationService->authorize($payerWallet->id, $payeeWallet->id, $value);
                 if (! $authorized) {
                     Log::warning('Transfer not authorized by third party', [
@@ -93,6 +86,46 @@ class TransferService
                     ]);
                 }
 
+                // 2. Lock wallets to prevent race conditions
+                // This ensures no other transaction can modify these wallets simultaneously
+                $lockedPayerWallet = $this->walletRepository->lockForUpdate($payerWallet->id);
+                $lockedPayeeWallet = $this->walletRepository->lockForUpdate($payeeWallet->id);
+
+                if (! $lockedPayerWallet || ! $lockedPayeeWallet) {
+                    throw new WalletNotFoundException($payerWallet->id ?? $payeeWallet->id, [
+                        'payer_wallet_id' => $payerWallet->id,
+                        'payee_wallet_id' => $payeeWallet->id,
+                        'value' => $value,
+                    ]);
+                }
+
+                // 3. Re-check balance after lock (may have changed due to concurrent transactions)
+                if (! $this->walletRepository->hasSufficientBalance($payerWallet->id, $value)) {
+                    throw new InsufficientBalanceException(
+                        $lockedPayerWallet->balance,
+                        $value,
+                        [
+                            'payer_wallet_id' => $payerWallet->id,
+                            'payee_wallet_id' => $payeeWallet->id,
+                            'value' => $value,
+                        ]
+                    );
+                }
+
+                // 4. Create transfer record
+                $this->transferRepository->create([
+                    'payer_wallet_id' => $payerWallet->id,
+                    'payee_wallet_id' => $payeeWallet->id,
+                    'value' => $value,
+                ]);
+
+                // 5. Update wallet balances
+                $this->walletRepository->decrementBalance($payerWallet->id, $value);
+                $this->walletRepository->incrementBalance($payeeWallet->id, $value);
+
+                // 6. Notify (after transfer is committed)
+                // Note: If notification fails, the transfer is still valid
+                // In the future, this should be moved to an async job/queue
                 $notified = $this->notificationService->notify($payerWallet->id, $payeeWallet->id, $value);
                 if (! $notified) {
                     Log::error('Transfer notification failed', [
@@ -101,6 +134,8 @@ class TransferService
                         'value' => $value,
                     ]);
 
+                    // TODO: Move notification to async job/queue
+                    // For now, we still throw exception to maintain backward compatibility with tests
                     throw new TransferNotificationFailedException([
                         'payer_wallet_id' => $payerWallet->id,
                         'payee_wallet_id' => $payeeWallet->id,

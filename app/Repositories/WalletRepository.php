@@ -69,6 +69,14 @@ class WalletRepository implements WalletRepositoryInterface
     }
 
     /**
+     * Lock wallet for update (pessimistic locking to prevent race conditions).
+     */
+    public function lockForUpdate(int $walletId): ?Wallet
+    {
+        return $this->model->where('id', $walletId)->lockForUpdate()->first();
+    }
+
+    /**
      * Clear cache for a wallet.
      */
     private function clearCache(int $walletId): void
